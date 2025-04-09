@@ -1,0 +1,54 @@
+name: Generate SBOM with cdxgen and scan with depscan
+
+on:
+  workflow_dispatch:
+    inputs:
+      src_repository:
+        description: 'Source Repository'
+        required: true
+        default: ''
+      src_branch:
+        description: 'Branch'
+        required: false
+        default: ''
+      src_type:
+        description: 'Project Type (java, python, dotnet)'
+        required: false
+        default: 'java'
+env:
+  OUTPUT_NAME: 'cyclonedxSBOM'
+jobs:
+  sbom:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.src_repository }}
+        ref: ${{ inputs.src_branch }}
+
+    - name: Generate SBOM using cdxgen container
+      run: |
+        docker run --rm \
+          -v "$(pwd)":/app:rw \
+          -v /tmp:/tmp \
+          -t ghcr.io/cyclonedx/cdxgen:latest \
+          -r /app -o /app/bom.json -t ${{ inputs.src_type }}
+
+    - name: list files
+      run: ls -la
+
+    - name: Scan SBOM with depscan
+      run: |
+        docker run --rm \
+          -v .:/app ghcr.io/owasp-dep-scan/dep-scan \
+          --bom /app/bom.json \
+          --report-template /app/bom.json \
+          --reports-dir /app
+        
+    - name: Upload Trivy results
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.OUTPUT_NAME }}
+        path: ${{github.workspace}}/*.json 
