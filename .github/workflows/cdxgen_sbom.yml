@@ -39,18 +39,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: free space at beginning
-      run: df -h
-      
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.src_repository }}
         ref: ${{ inputs.src_branch }}
 
-    - name: free space after checkout
-      run: df -h
-    
     - name: Generate SBOM using cdxgen container
       run: |
         docker run --rm \
@@ -59,15 +53,6 @@ jobs:
           -t ghcr.io/cyclonedx/cdxgen:latest \
           -r /app -o /app/bom.json -t ${{ inputs.src_type }} \
           --profile ${{ inputs.src_profile }} --json-pretty
-
-    - name: list files
-      run: ls -la
-
-    - name: free space after cdxgen
-      run: df -h
-    
-    - name: clean space
-      run: docker system prune -a -f
 
     - name: Upload SBOM results
       uses: actions/upload-artifact@v4
