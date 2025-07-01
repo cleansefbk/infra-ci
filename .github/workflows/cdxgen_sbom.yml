@@ -70,7 +70,7 @@ jobs:
     - name: Generate SBOM using cdxgen container
       run: |
         docker run --rm \
-          -v "$(pwd)":/app:rw \
+          -v ${{ github.workspace }}:/app:rw \
           -v /tmp:/tmp \
           -t ghcr.io/cyclonedx/cdxgen:latest \
           -r /app -o /app/bom.json -t ${{ inputs.src_type }} \
