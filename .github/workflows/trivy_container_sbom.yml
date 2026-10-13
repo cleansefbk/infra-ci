@@ -8,7 +8,7 @@ on:
         required: true
         default: ''
       src_vuln_type:
-        description: Vulnerability types (os,library). Default os,library.
+        description: List of package types (allowed values: os,library). Default os,library.
         required: false
         type: choice
         options:
@@ -16,6 +16,15 @@ on:
           - 'library'
           - 'os,library'
         default: 'os,library'
+      scanners_type:
+        description: List of what security issues to detect (license,vuln). Default license.
+        required: false
+        type: choice
+        options:
+          - 'license'
+          - 'vuln'
+          - 'vuln,license'
+        default: 'license'
 env:
   OUTPUT_NAME: 'cyclonedxSBOM'
 jobs:
@@ -28,45 +37,27 @@ jobs:
     
     steps:
 
-      - name: Generate SBOM
-        uses: aquasecurity/trivy-action@v0.36.0
-        #see https://github.com/aquasecurity/trivy-action for documentation
-        with:
-          image-ref: ${{ inputs.image_repository }}
-          format: 'cyclonedx'
-          output: 'cyclonedx-SBOM.json'
-          #severity: 'CRITICAL,HIGH'
-          exit-code: '0'
-          vuln-type: ${{ inputs.src_vuln_type }}
-      
-      - name: Run Trivy for vulnerability scanner
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: 'sbom'
-          scan-ref: 'cyclonedx-SBOM.json'
-          format: 'cyclonedx'
-          output: 'cyclonedx-vuln-SBOM.json'
-          exit-code: '0'
-          vuln-type: ${{ inputs.src_vuln_type }}
-          scanners: 'vuln'
-          # On a subsequent call to the action we know trivy is already installed so can skip this
-          skip-setup-trivy: true
+      - name: Generate SBOM using Trivy
+        run: |
+          docker run --rm \
+            -v /tmp:/tmp \
+            -t aquasec/trivy:0.75.0 image \
+            --format "cyclonedx" \
+            --scanners ${{ inputs.scanners_type }} \
+            --pkg-types ${{ inputs.src_vuln_type }} \
+            --output "/tmp/trivy-sbom.json" \
+             ${{ inputs.image_repository }}
           
-      - name: Run Trivy for license scanner
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          scan-type: 'sbom'
-          scan-ref: 'cyclonedx-SBOM.json'
-          format: 'cyclonedx'
-          output: 'cyclonedx-license-SBOM.json'
-          exit-code: '0'
-          vuln-type: ${{ inputs.src_vuln_type }}
-          scanners: 'license'
-          # On a subsequent call to the action we know trivy is already installed so can skip this
-          skip-setup-trivy: true
-          
-      - name: Upload Trivy results
+      - name: artifact name
+        id: artifactname
+        run: |
+          out_name="${{ inputs.image_repository }}"
+          out_name="${out_name//\//-}"  # Replace '/' with '-'
+          echo "out_name=$out_name" >> $GITHUB_OUTPUT
+  
+      - name: Upload SBOM results
         uses: actions/upload-artifact@v7
         with:
-           name: ${{ env.OUTPUT_NAME }}
-           path: ${{github.workspace}}/*.json     
+          name: ${{ steps.artifactname.outputs.out_name }}
+          path: /tmp/*.json
+          if-no-files-found: warn
