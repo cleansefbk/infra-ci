@@ -8,7 +8,7 @@ on:
         required: true
         default: ''
       src_vuln_type:
-        description: List of package types (allowed values: os,library). Default os,library.
+        description: 'List of package types (allowed values: os,library). Default os,library.'
         required: false
         type: choice
         options:
@@ -17,7 +17,7 @@ on:
           - 'os,library'
         default: 'os,library'
       scanners_type:
-        description: List of what security issues to detect (license,vuln). Default license.
+        description: 'List of what security issues to detect (license,vuln). Default license.'
         required: false
         type: choice
         options:
