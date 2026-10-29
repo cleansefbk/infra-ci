@@ -18,7 +18,7 @@ jobs:
             -v .:/app:rw \
             -v /tmp:/tmp \
             -t ghcr.io/cyclonedx/cdxgen:latest \
-            --include-formulation --bom-audit --bom-audit-categories \
+            --include-formulation -o /tmp/mlbom.json --bom-audit --bom-audit-categories \
             ai-bom ${{ inputs.src_repository }} --json-pretty
           
       - name: list files
