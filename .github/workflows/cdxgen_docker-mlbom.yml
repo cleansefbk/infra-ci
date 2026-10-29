@@ -12,12 +12,6 @@ jobs:
   security-scan:
     runs-on: ubuntu-latest
     steps:
-      - name: Install cdxgen
-        run: |
-          npm install -g @cyclonedx/cdxgen
-      - name: Generate ML-BOM
-        run: aibom ${{ inputs.src_repository }}
-      
       - name: Generate ML-BOM using cdxgen container
         run: |
           docker run --rm \
