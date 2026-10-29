@@ -1,4 +1,4 @@
-name: AIBOM AI-BOM from a Hugging Face purl or URL with cdxgen (installed)
+name: ML-BOM AI-BOM from a Hugging Face purl or URL with cdxgen (installed)
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ jobs:
       - name: Install cdxgen
         run: |
           npm install -g @cyclonedx/cdxgen
-      - name: Generate AI-BOM
+      - name: Generate ML-BOM
         run: aibom ${{ inputs.src_repository }}
         
       - name: list files
@@ -30,7 +30,7 @@ jobs:
           out_name="${out_name//:/-}"  # Replace ':' with '-'
           echo "out_name=$out_name" >> $GITHUB_OUTPUT
   
-      - name: Upload AI-BOM results
+      - name: Upload ML-BOM results
         uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.artifactname.outputs.out_name }}
